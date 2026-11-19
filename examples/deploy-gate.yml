@@ -1,0 +1,41 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PAYLOAD: '{"service":"shop","environment":"production","commit":"${{ github.sha }}"}'
+    steps:
+      - uses: actions/checkout@v7
+      - id: approval
+        uses: duereason/approve@v1
+        with:
+          api-key: ${{ secrets.DUEREASON_API_KEY }}
+          reason: "Release ${{ github.sha }} from ${{ github.ref_name }}: ${{ github.event.head_commit.message }}"
+          payload: ${{ env.PAYLOAD }}
+          timeout-minutes: 120
+      - name: Verify the grant covers exactly this payload
+        uses: duereason/approve@v1
+        with:
+          mode: verify
+          api-key: ${{ secrets.DUEREASON_API_KEY }}
+          organization: acme
+          payload: ${{ env.PAYLOAD }}
+          grant: ${{ steps.approval.outputs.grant }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run deploy
+      - name: Report the execution
+        if: always()
+        uses: duereason/approve@v1
+        with:
+          mode: report
+          api-key: ${{ secrets.DUEREASON_API_KEY }}
+          request-id: ${{ steps.approval.outputs.request-id }}
+          grant: ${{ steps.approval.outputs.grant }}
+          outcome: ${{ job.status == 'success' && 'succeeded' || 'failed' }}

@@ -1,0 +1,129 @@
+name: DueReason approval
+description: >-
+  Hold the job until the people your organization configured in DueReason approve it, then hand
+  the signed grant to the next step. Fails the job on rejection, expiry or timeout.
+author: DueReason
+branding:
+  icon: user-check
+  color: green
+
+inputs:
+  api-key:
+    description: >-
+      DueReason API key with the approval:request and approval:read scopes. Pass it from a secret,
+      never inline.
+    required: true
+  url:
+    description: DueReason address, for a self-hosted instance.
+    required: false
+    default: https://duereason.com
+  action:
+    description: Action key the request is for, as configured in DueReason.
+    required: false
+    default: deployment
+  title:
+    description: >-
+      What approvers see first (3-200 characters). Default for deployments: "Deploy <repository>
+      <short sha> to <environment>".
+    required: false
+    default: ""
+  reason:
+    description: >-
+      Why this should happen (10-2000 characters). Approvers decide on it. Required for mode
+      request; required for mode verify only when request-if-missing is "true".
+    required: false
+  payload:
+    description: >-
+      Exactly what will be executed, as a JSON object; the grant is bound to it. Default:
+      { service: repository name, environment, commit: sha, changeSummary: commit message }, the
+      payload of the deployment action that DueReason's production deployments template creates.
+    required: false
+    default: ""
+  environment:
+    description: >-
+      Target environment for the default payload. The template's deployment action accepts
+      production and staging.
+    required: false
+    default: production
+  timeout-minutes:
+    description: >-
+      How long to wait for a decision. The request expires then and the job fails, so nobody
+      approves a job that stopped waiting.
+    required: false
+    default: "60"
+  mandate-check:
+    description: >-
+      Before opening a request (mode request), check whether a mandate would auto-approve it
+      instantly, so the step can log what is about to happen. The request is always filed either
+      way: a covered one approves instantly (no wait, a grant comes back right away), and that
+      request still counts against the mandate's limits and has a receipt like any other. Set to
+      "false" to skip this advisory check (and the mandate:read scope it needs); mandates still
+      apply server-side.
+    required: false
+    default: "true"
+  mode:
+    description: >-
+      request (default): ask for approval and wait for the grant. verify: check that an approved
+      grant exists for this exact payload -- pass the grant output from a request step to verify
+      it offline, or omit grant to look it up: the newest APPROVED request for this action +
+      payload, via the API, verified offline same as a grant you already have. The lookup is what
+      makes verify usable as a required status check or a deploy pipeline's own step that never
+      received a grant output itself; see request-if-missing. report: record how an approved
+      action that already ran turned out; a grant is single-use.
+    required: false
+    default: request
+  grant:
+    description: >-
+      The grant to check (mode verify, optional: omit it to look one up instead) or report on
+      (mode report, required). Pass the `grant` output of the request step.
+    required: false
+    default: ""
+  request-if-missing:
+    description: >-
+      mode verify only, when no approved request is found for this action + payload (grant is not
+      set): file one, same as mode request would, using the reason input, and fail with a link to
+      it, so a re-run of this job passes once it is approved. Default "false": fail immediately
+      without filing anything.
+    required: false
+    default: "false"
+  request-id:
+    description: >-
+      The approval request to report the execution of (mode report). Pass the `request-id` output
+      of the request step.
+    required: false
+    default: ""
+  organization:
+    description: >-
+      Your DueReason organization slug (mode verify); a grant issued by another organization is
+      refused.
+    required: false
+    default: ""
+  outcome:
+    description: succeeded or failed (mode report).
+    required: false
+    default: ""
+  detail:
+    description: Why it failed, at most 2000 characters (mode report, optional).
+    required: false
+    default: ""
+
+outputs:
+  status:
+    description: approved, rejected, expired, cancelled or timeout.
+  request-id:
+    description: >-
+      The DueReason request id (apr_...), mode request only. Always set once the request has been
+      filed, including when a mandate approved it instantly.
+  grant:
+    description: >-
+      The signed grant (compact JWS) when approved. Pass it to a verify step before deploying and
+      to a report step afterwards (mode request's output; mode verify sets `request-id` from its
+      `sub`, not this output). Set whenever status is approved, including under a mandate.
+  mandate-id:
+    description: >-
+      mode request only: the mandate (mdt_...) that approved this request instantly. Empty when
+      the request was decided by a person, or when mandate-check is "false".
+
+runs:
+  using: node24
+  main: dist/index.mjs

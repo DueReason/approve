@@ -1,0 +1,38 @@
+{
+  "name": "@duereason/action",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "GitHub Action that holds a job until people approve it in DueReason, and hands the signed grant to the next step.",
+  "keywords": [
+    "duereason",
+    "github-actions",
+    "deployment",
+    "approval",
+    "human-in-the-loop",
+    "change-management"
+  ],
+  "homepage": "https://duereason.com",
+  "type": "module",
+  "files": [
+    "action.yml",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "type-check": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@duereason/sdk": "^0.1.0",
+    "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
