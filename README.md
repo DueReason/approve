@@ -21,13 +21,6 @@ A full workflow, including verifying the grant and reporting the outcome, is in
 
 ## Usage
 
-<!-- availability:start -->
-**`uses: duereason/approve@v1` resolves once this repository is pushed under that name and
-tagged `v1` (or `action-v1`) - until then, pin `uses:` to a commit SHA on this repository
-instead of `@v1`.** [VERIFY the final org/repo name and tag convention with Leszek before
-relying on `@v1` in a workflow.]
-<!-- availability:end -->
-
 Create an API key in DueReason with the `approval:request`, `approval:read` and `mandate:read`
 scopes and store it as the `DUEREASON_API_KEY` secret (the action's `mandate-check` pre-check
 defaults to on and needs `mandate:read`; see below to skip it and drop that scope). Gating a
@@ -207,15 +200,9 @@ pnpm --filter @duereason/action build   # dist/index.mjs, the action and the SDK
 pnpm --filter @duereason/action test
 ```
 
-### Publishing a usable `uses: duereason/approve@v1`
+### Releases
 
-This package is exported to its own repository by `scripts/public-repos/export.sh` in the
-private monorepo, so `uses: duereason/approve@v1` as shown above resolves once that repository
-is pushed under the `duereason/approve` name [VERIFY with Leszek] and a maintainer tags it there
-following semver-ish major tags: push `action-v1` (and move it forward, e.g. `action-v1.2`)
-pointing at the commit with the matching committed `dist/`, matching the convention consumers
-expect from `@v1` in the README. Until the first tag exists, pin `uses:` to a commit SHA
-instead.
+Tags follow `vX.Y.Z` with a moving major tag `v1`; `dist/` is committed and must match `src/`.
 
 ## Links
 
